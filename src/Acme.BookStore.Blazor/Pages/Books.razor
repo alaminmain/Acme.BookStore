@@ -12,12 +12,21 @@
 
 
 @code{
+     IReadOnlyList<AuthorLookupDto> authorList = Array.Empty<AuthorLookupDto>();
     public Books()
     {
         CreatePolicyName = BookStorePermissions.Books.Create;
         UpdatePolicyName = BookStorePermissions.Books.Edit;
         DeletePolicyName = BookStorePermissions.Books.Delete;
     }
+   
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        authorList = (await AppService.GetAuthorLookupAsync()).Items;
+    }
+
+
 }
 <Card>
     <CardHeader>
@@ -58,9 +67,15 @@
                         </EntityActions>
                     </DisplayTemplate>
                 </DataGridEntityActionsColumn>
+              
+
                 <DataGridColumn TItem="BookDto"
                                 Field="@nameof(BookDto.Name)"
                                 Caption="@L["Name"]"></DataGridColumn>
+                
+                 <DataGridColumn TItem="BookDto"
+                Field="@nameof(BookDto.AuthorName)"
+                Caption="@L["Author"]"></DataGridColumn>
                 <DataGridColumn TItem="BookDto"
                                 Field="@nameof(BookDto.Type)"
                                 Caption="@L["Type"]">
@@ -102,6 +117,19 @@
             <ModalBody>
                 <Validations @ref="@CreateValidationsRef" Model="@NewEntity" ValidateOnLoad="false">
                     <Validation MessageLocalizer="@LH.Localize">
+                        <Field>
+    <FieldLabel>@L["Author"]</FieldLabel>
+    <Select TValue="Guid" @bind-SelectedValue="@NewEntity.AuthorId">
+        <SelectItem TValue="Guid" Value="Guid.Empty">@L["PickAnAuthor"]</SelectItem>
+        @foreach (var author in authorList)
+        {
+            <SelectItem TValue="Guid" Value="@author.Id">
+                @author.Name
+            </SelectItem>
+        }
+        </Select>
+</Field>
+
                         <Field>
                             <FieldLabel>@L["Name"]</FieldLabel>
                             <TextEdit @bind-Text="@NewEntity.Name">
@@ -164,6 +192,18 @@
                             </TextEdit>
                         </Field>
                     </Validation>
+                    <Field>
+    <FieldLabel>@L["Author"]</FieldLabel>
+    <Select TValue="Guid" @bind-SelectedValue="@EditingEntity.AuthorId">
+        @foreach (var author in authorList)
+        {
+            <SelectItem TValue="Guid" Value="@author.Id">
+                @author.Name
+            </SelectItem>
+        }
+    </Select>
+</Field>
+
                     <Field>
                         <FieldLabel>@L["Type"]</FieldLabel>
                         <Select TValue="BookType" @bind-SelectedValue="@EditingEntity.Type">
